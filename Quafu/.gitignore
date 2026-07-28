@@ -1,0 +1,14 @@
+.DS_Store
+.ipynb_checkpoints/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+results/*.json
+results/*.csv
+results/*.png
+results/*.svg
+results/*.qasm
+results/*.html
+

@@ -1,0 +1,15 @@
+name: QuantumComputing
+channels:
+  - defaults
+dependencies:
+  - python>=3.12
+  - pip
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - jupyterlab
+  - ipykernel
+  - pip:
+      - quafusqc==3.3.9
+      - qiskit[visualization]~=2.5.0
