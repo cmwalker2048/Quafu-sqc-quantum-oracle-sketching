@@ -17,7 +17,11 @@ $$
 \rightarrow
 \text{官方 IMDb classification}
 \rightarrow
-\text{flat/full-vector Quafu-SQC pilot}.
+\text{flat/full-vector Quafu-SQC pilot}
+\rightarrow
+\text{one-hot-calibrated hardware validation}
+\rightarrow
+\text{tiny Ridge inverse-QSVT + shadows}.
 $$
 
 去重依据与本轮结果见 `NEXT_STAGE_DECISION.md`。
@@ -55,7 +59,7 @@ $$
 
 验收：
 
-- 十一个 notebook 从 `QuantumComputing` 环境可依次执行；
+- 十三个 notebook 从 `QuantumComputing` 环境可依次执行；
 - 仓库文本与 notebook 源码中不存在 API token；
 - 默认执行不会提交云端任务。
 
@@ -174,9 +178,17 @@ H^n → sampled projector phases → exact inverse → H^n → measure
 - QASM 可在 notebook 中完整打印和保存；
 - 提交前输出门计数、qubit 数、`M` 和 QASM 哈希；
 - `SUBMIT_TO_HARDWARE=False` 为默认值；
-- 必须显式指定单个 experiment id，不能默认批量提交；
+- 必须显式启用小批 experiment plan，默认每次最多两条，不能默认提交 campaign；
 - 后端状态必须实时查询，不能使用旧 demo 的截图；
 - 任务结果保存 `tid`、原始 counts、transpiled QASM 和实验参数。
+
+`11` 进一步加入：
+
+- 2q/4q one-hot bit-order controls；
+- 只接受非负 queue 状态和正整数 task id；
+- duplicate submission 与 deep-QSVT guards；
+- task registry、非终态 result 检查、raw/returned QASM 持久化；
+- flat/general 指标的 95% Wilson 区间。
 
 局限：
 
@@ -224,33 +236,50 @@ w=(X^TX+\lambda I)^{-1}X^Ty,
 g(\sigma)=\frac{\sigma}{\sigma^2+\lambda}.
 $$
 
-第一版：
+`12` 已完成第一版：
 
-- $D=4$；
-- 训练样本 4–8；
-- 每行 1–2 个非零元素；
-- QSVT degree 3 或 5；
-- 模拟器优先；
-- 真机只提交编译后仍可控的子电路。
+- official IMDb train 学得两个监督式聚合特征，$D=2$；
+- average-loss normal equation $A=X^\top X/N+\lambda I$；
+- 2×2 Halmos block encoding；
+- 只在两个已知谱点精确的 degree-3 odd inverse polynomial；
+- real-part LCU 与 postselection；
+- 4-qubit dense-resynthesized hardware circuit。
 
-验收前置条件：
+已通过的验收：
 
 - vector state sketch 已被多输入态测试，并已由 `10` 做 $D=4$ 门级等价；
 - block encoding 的投影块与目标矩阵数值一致；
-- 多项式逼近误差与线路误差分开报告。
+- 多项式谱点误差与线路误差分开报告；
+- ideal heralding probability 0.10457；
+- postselected weight-state fidelity 数值上约为 1；
+- prepare/verify 本地编译各 18 CX。
 
 这里的 QSVT 指 ridge inverse polynomial；`07`/`10` 已实现的是 vector state
 sketch 内部用于 arcsin 的 QSVT，不能把二者混为同一个完成项。
 
+边界：degree-3 polynomial 不是连续谱区间上的通用 inverse approximation；
+dense unitary resynthesis 的经典成本指数增长；当前使用 postselection，没有
+amplitude amplification。正规方程条件数约 2.204，对应论文
+singular-value 口径的 $\kappa_{\rm reg}\approx1.485$。
+
 ## 阶段 6：classical shadows
 
-只有 Hadamard-test 分类已经稳定后才开始：
+`12` 已完成 tiny pilot：
 
 - controlled state preparation；
-- 随机 Clifford/合适的 shadow ensemble；
+- two-qubit global-Clifford ensemble；
 - 保存随机 seed 和 bitstring；
-- 多 observable 置信区间；
-- 多测试点摊销成本。
+- 12 个 distinct settings、每个 2,048 shots；
+- 干涉态保存 $\operatorname{Re}\langle x|w\rangle$ 的符号；
+- 对全部 25,000 个 test 点重新分类；
+- 分阶段生成 shallow-control 与 full-QSVT-shadow 真机包。
+
+当前 shadow 会显式重建 $4\times4$ density estimator，只适合 $D=2$ 自检；
+distinct-setting cluster bootstrap 是探索性区间，不是论文
+i.i.d.-Clifford + median-of-means 保证。12-setting Aer QSVT-shadow 的分类
+accuracy 约 0.849，但 weight norm ratio 约 0.623、signed-overlap RMSE
+约 0.303，因此应称为 sign/classification pilot，而非
+$\epsilon$-accurate overlap demonstration。
 
 ## 经典基线和公平比较
 

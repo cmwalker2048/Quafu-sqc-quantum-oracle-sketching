@@ -3,6 +3,13 @@
 入口 notebook：
 [`notebooks/11_quafu_hardware_validation.ipynb`](notebooks/11_quafu_hardware_validation.ipynb)
 
+如果要运行最新的 **tiny Ridge + inverse QSVT + interferometric classical
+shadows**，不要把任务追加到 `11`。请直接使用
+[`notebooks/12_tiny_ridge_qsvt_shadows.ipynb`](notebooks/12_tiny_ridge_qsvt_shadows.ipynb)
+和独立的
+[Tiny Ridge/shadows 真机指南](TINY_RIDGE_SHADOWS_README.md)。`12` 使用四条
+4q one-hot 校准、冻结的 Clifford/模型 provenance 和独立 task registry。
+
 它已经把 QASM 审计、后端查询、提交、task registry、状态轮询、结果取回、
 bit-order 规范化、returned circuit 统计和结果作图集中到一个文件。
 本 notebook 使用本机已验证的 `quafusqc 3.3.9`：
@@ -402,4 +409,3 @@ raw 和 corrected 必须分列报告；corrected 可能是非整数权重。
 它不能单独证明官方 IMDb 25k/25k 任务已经在量子硬件上端到端运行，也不能用
 $D=4$ pilot 宣称系统级指数空间优势。真实 IMDb accuracy 结果仍来自 `08`；
 真机 notebook 验证的是对应 state-sketch primitive 的设备可执行性。
-

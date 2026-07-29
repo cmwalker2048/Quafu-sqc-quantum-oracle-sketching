@@ -19,10 +19,14 @@ Boolean phase oracle 重新写成可以检查、模拟和提交到 Quafu-SQC 云
 9. 在官方 IMDb 25,000 train / 25,000 test 上真实训练并评估 Ridge；
 10. 用 general-vector QOS 重建 learned weight，再重新运行 held-out classification；
 11. 生成 IMDb-derived flat QOS 与 full $D=4$ general-vector QSVT 真机包。
+12. 用一个 notebook 统一完成 bit-order 校准、提交、轮询、结果取回和远端资源审计。
+13. 实现 2D IMDb tiny Ridge、normal-equation inverse QSVT 和干涉式
+    global-Clifford classical shadows，并生成独立的 4-qubit 真机包。
 
-它仍不是完整量子 ridge/LS-SVM、matrix block encoding、amplitude
-amplification 或 classical-shadows 复现，也不能用本地模拟和低维真机 pilot
-证明论文的系统级渐近指数空间优势。
+`12` 已包含一个真正执行 matrix block encoding、tiny Ridge inverse QSVT 和
+shadow readout 的有限规模闭环；它仍不是 scalable QOS data loading、
+amplitude amplification 或容错级 LS-SVM，也不能用低维真机 pilot 证明论文的
+系统级渐近指数空间优势。
 
 ## 当前状态
 
@@ -44,14 +48,18 @@ amplification 或 classical-shadows 复现，也不能用本地模拟和低维�
 | Full general-vector QSVT 门级 | 已实现 $D=4$ | 4 qubits、两辅助位、NumPy-vs-gate 逐振幅等价 |
 | 官方 IMDb classification | 已实现 | 25k/25k 无泄漏 HashingVectorizer + Ridge |
 | IMDb learned-weight QOS | 已实现 | active/expected 重建后重新做官方 test 分类 |
-| tiny ridge + QSVT | 待实现 | 模拟器优先 |
-| classical shadows | 待实现 | 在 Hadamard-test 验证之后 |
+| 一站式真机验证 | 已实现，默认关闭 | 73 条线路复核、one-hot 位序校准、task registry 与统一结果解析 |
+| tiny ridge + inverse QSVT | 已实现，默认离线 | 2×2 normal-equation block encoding、degree-3 spectrum-matched inverse |
+| classical shadows | 已实现 tiny pilot | 干涉态 + 12-setting batched global Clifford；保留分类符号 |
+| tiny Ridge/shadow 真机包 | 已生成，尚未提交 | 31 条 4q QASM、四位校准、provenance guard、status/submit/fetch |
 
 ## 目录
 
 ```text
 Quafu/
 ├── README.md
+├── HARDWARE_README.md
+├── TINY_RIDGE_SHADOWS_README.md
 ├── environment.yml
 ├── requirements.txt
 ├── .gitignore
@@ -71,6 +79,7 @@ Quafu/
 │   ├── PROJECT_PLAN.md
 │   ├── NEXT_STAGE_DECISION.md
 │   ├── GENERAL_VECTOR_IMDB_RESULTS.md
+│   ├── TINY_RIDGE_SHADOWS_RESULTS.md
 │   ├── API_DECISION.md
 │   ├── SOURCE_MAP.md
 │   ├── VALIDATION.md
@@ -86,7 +95,9 @@ Quafu/
 │   ├── 07_general_vector_qos.ipynb
 │   ├── 08_imdb_general_vector_classification.ipynb
 │   ├── 09_quafu_imdb_vector_pilot.ipynb
-│   └── 10_quafu_general_vector_qsvt_pilot.ipynb
+│   ├── 10_quafu_general_vector_qsvt_pilot.ipynb
+│   ├── 11_quafu_hardware_validation.ipynb
+│   └── 12_tiny_ridge_qsvt_shadows.ipynb
 ├── data/
 │   └── README.md
 └── results/
@@ -96,6 +107,7 @@ Quafu/
     ├── imdb_general_vector_qos_sweep.csv
     ├── imdb_vector_pilot/         # 65 条 flat QASM
     ├── general_vector_qsvt_pilot/ # 4-qubit full QSVT QASM
+    ├── tiny_ridge_qsvt_shadows/   # 31 条 tiny Ridge/shadow QASM
     └── quafu_bundle/              # 42 条 Boolean QASM
 ```
 
@@ -122,6 +134,16 @@ jupyter lab
 复用同一数据，`10` 复用 `09` 保存的 $D=4$ target。`06`、`09`、`10` 都会
 离线生成 QASM 和 manifest，所有云端提交开关默认是 `False`。真机时先审计
 manifest，再只选择一个 experiment id。
+
+准备上真机时直接打开 `11_quafu_hardware_validation.ipynb`。先保持
+`ACTION="dry_run"` 跑完整本，再按照
+[真机验证操作指南](HARDWARE_README.md) 依次进行 2q/4q bit-order、
+flat controls、compiler A/B、IMDb IID 和 full-QSVT。
+
+如果目标是本轮 tiny Ridge + inverse QSVT + classical shadows，直接打开
+`12_tiny_ridge_qsvt_shadows.ipynb`，先以 `ACTION="dry_run"` 完整运行，再严格
+按 [Tiny Ridge/shadows 真机指南](TINY_RIDGE_SHADOWS_README.md) 分
+`calibration → ridge → shadow_control → shadow_qsvt` 四阶段提交。
 
 ### 新机器或 GitHub clone
 
@@ -250,6 +272,24 @@ $0.67165\pm0.00213$；原 Ridge 为 0.67744。QOS logical-qubit 曲线仍被明�
 完整解释、结果表和“哪些是实测/仿真/公式”的边界见
 [General-vector 与 IMDb 阶段结果](docs/GENERAL_VECTOR_IMDB_RESULTS.md)。
 
+`12` 在 official split 上构造了一个 2D tiny Ridge。经典 test accuracy 为
+0.84848；inverse-QSVT 的理想 heralding probability 为 0.10457，
+postselected weight-state fidelity 数值上约为 1。12-setting Aer
+interferometric shadow 重新分类的 accuracy 约为 0.84900，但估计权重的 norm
+ratio 只有约 0.623、signed-overlap RMSE 约 0.303，所以当前只是符号/分类
+pilot。简单 polarity rule 的 accuracy 为 0.84876，略高于 exact tiny Ridge；
+QSVT 的机制证据来自 heralding 和 target-inverse verifier，不是 accuracy 提升。
+对应 full QSVT-shadow 线路使用 4 qubits，但本地编译仍有约 95–97 个 CX。
+监督式词汇投影和线路描述的经典存储不计入这 4 qubits，因此最终图把它放在
+独立面板，不作为优势点。
+
+![Tiny Ridge machine-size accounting and hardware bridge](assets/figures/tiny-ridge-machine-size-comparison.png)
+
+真机分批步骤、bit-order、取回方式和结果判读见
+[Tiny Ridge/shadows 真机指南](TINY_RIDGE_SHADOWS_README.md)。
+完整公式、误差指标和科学边界见
+[Tiny Ridge/shadows 阶段结果](docs/TINY_RIDGE_SHADOWS_RESULTS.md)。
+
 ## 为什么不照抄 Figure 2
 
 原 Figure 2 的任务性能来自经典 Ridge/SVD，量子部分是 logical-qubit
@@ -321,14 +361,19 @@ V_M ... V_2 V_1 的门级功能和真实硬件噪声
 
 ## 下一阶段
 
-离线 general-vector 与真实 IMDb 已闭合。下一条主线是：
+离线 tiny Ridge/QSVT/shadow 已闭合。下一条主线是：
 
-1. 从 `09` manifest 选择一条 flat H-only / balanced control 上真机；
-2. 保存 raw counts 与 returned transpiled QASM；
-3. 若编译资源和 control 结果可接受，再尝试 `10` 的 $M=8$ full-QSVT verifier；
-4. 分开报告 heralding probability、conditional fidelity 和成功事件数；
-5. 再进入 matrix block encoding + tiny quantum ridge inverse；
-6. Hadamard test 稳定后再做 classical shadows。
+1. 在 `12` 固定同一组连通的四个物理 qubits；
+2. 分两批运行 q0–q3 one-hot calibration；
+3. 运行 Ridge prepare/unprepare control、QSVT prepare 和 verifier；
+4. 完成 12-setting shallow shadow control；
+5. 显式冻结前置 task ids、核对设备时间窗，并通过 Ridge/shallow-shadow
+   统计质量门槛后，才分批尝试约 95–97 CX 的 full QSVT-shadow；
+6. 保存 raw counts、frozen manifest entry、returned QASM、herald events、
+   signed overlap error 和 setting-level 探索性区间。
+
+`11` 仍负责旧 flat/general-vector hardware campaign；`12` 独立负责本轮
+tiny Ridge + shadows 闭环。
 
 详细里程碑和验收条件见 [项目计划](docs/PROJECT_PLAN.md)。
 

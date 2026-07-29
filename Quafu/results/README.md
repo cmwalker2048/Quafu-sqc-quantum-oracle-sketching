@@ -72,3 +72,35 @@ degree-4 QSVT：
 
 `general_vector_qsvt_pilot/raw_results/` 和 `parsed_real_results.csv` 仍被忽略，
 只有取得并审核真实设备返回后才应选择性发布。
+
+`12_tiny_ridge_qsvt_shadows.ipynb` 的
+`tiny_ridge_qsvt_shadows/` 保存 2D IMDb Ridge、inverse QSVT 和
+interferometric global-Clifford shadow：
+
+- 无原始评论文本的派生 2D train/test cache 与 hash；
+- normal-equation block encoding、spectrum-matched degree-3 polynomial、
+  QSVT phases、条件数和理想 postselection 指标；
+- 4 条 q0–q3 one-hot calibration、3 条 Ridge、12 条 shallow shadow control
+  与 12 条 full QSVT-shadow，共 31 条 4q QASM；
+- QASM hash/schema/basis audit 和理想 Aer counts；
+- shadow weight norm、signed direction cosine、signed-overlap
+  MAE/RMSE/max error、classification accuracy 与 distinct-setting cluster
+  bootstrap 探索性区间；
+- paper-inspired machine-size account 和 tiny mechanism 的分面图。
+
+`tiny_ridge_qsvt_shadows/raw_results/`、`task_registry.json` 和
+`hardware_results.json/csv` 为真实设备产物，默认忽略。receipt 会冻结完整
+manifest entry、Clifford matrix/seed、QASM/model/data hashes；取回时 provenance
+不一致的 counts 只保存 raw payload，不进入分析。
+
+`11_quafu_hardware_validation.ipynb` 使用
+`hardware_validation/` 作为统一真机工作目录：
+
+- `offline_audit.json/csv`：73 条 flat/general/calibration QASM 的离线审计；
+- `audited_run_plan.csv`：冻结后的候选运行计划；
+- `calibration_qasm/`：2q/4q one-hot bit-order controls；
+- `task_registry.json`：提交 task id ledger；
+- `hardware_results.json/csv`：统一解析结果；
+- `raw_results/`：status、receipt、raw payload、returned QASM 与真机图。
+
+后三类真实云端产物默认被忽略，发布前需人工审核。

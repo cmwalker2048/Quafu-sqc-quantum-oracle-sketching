@@ -10,6 +10,7 @@
   [`qos.py`](https://github.com/haimengzhao/quantum-oracle-sketching/blob/10c092cefcfdff9951bf5729bd2ffb4c25fe2254/qos.py)、
   [`qos_sampling.py`](https://github.com/haimengzhao/quantum-oracle-sketching/blob/10c092cefcfdff9951bf5729bd2ffb4c25fe2254/qos_sampling.py)、
   [`data_generation.py`](https://github.com/haimengzhao/quantum-oracle-sketching/blob/10c092cefcfdff9951bf5729bd2ffb4c25fe2254/data_generation.py)、
+  [`qsvt.py`](https://github.com/haimengzhao/quantum-oracle-sketching/blob/10c092cefcfdff9951bf5729bd2ffb4c25fe2254/qsvt.py)、
   [`real_datasets/imdb_svm.py`](https://github.com/haimengzhao/quantum-oracle-sketching/blob/10c092cefcfdff9951bf5729bd2ffb4c25fe2254/real_datasets/imdb_svm.py)。
 
 本表解决一个关键问题：原仓库中的 JAX 数组函数，与本项目实际生成的门级
@@ -28,6 +29,10 @@ Quafu-SQC 实验分别对应到哪里。
 | general-vector state sketch | `qos_sampling.q_state_sketch` | `07` active 数组；`08` learned IMDb weight；`10` full $D=4$ gate circuit | 已实现到小规模门级 |
 | QSVT | `qsvt.apply_qsvt*` | `07` degree-4 数组；`10` signal + real 两辅助位线路 | 已实现 $D=4$，未做 amplitude amplification |
 | IMDb ridge accuracy | `real_datasets/imdb_svm.py` 的 `RidgeClassifier` + CV | `08` 官方 25k/25k split、stateless hashing + Ridge | 已真实运行且修复原脚本泄漏 |
+| 真机 orchestration | 原仓库无 Quafu-SQC 提交/取回层 | `11` bit-order controls、提交 guard、task registry、raw/returned-QASM parser | 已实现，默认 dry run |
+| tiny Ridge inverse | 论文 Theorem F.13；仓库 `qsvt.py` 提供 QSVT utilities | `12` 的 2×2 normal-equation block encoding + degree-3 inverse QSVT | 已实现谱点精确 tiny 版本 |
+| interferometric shadow | 论文 Lemma F.16；真实数据脚本未执行 | `12` 的干涉态、global-Clifford snapshots 与 held-out classification | 已实现 12-setting tiny pilot |
+| Figure-2/tiny 对照 | 原脚本为同一经典 accuracy + 三种空间公式 | `12` 用 held-out hashing accuracy 重新记账，tiny 机制放独立面板 | 非逐点复现，避免混用资源轴 |
 
 ## Boolean 对应关系
 
@@ -117,6 +122,12 @@ QOS、block encoding、QSVT 和 shadow readout 后得到的真机准确率。
 拟合，official test 只评估；同时真正把 learned Ridge weight 送入
 general-vector QOS 数组路径。`09`/`10` 再从 official train 派生 $D=4$
 centroid vector，分别生成 flat 与 full general-vector QASM。
+
+`12` 进一步用 official-train-only 的监督词汇投影构造两个特征，再真正运行
+2×2 Ridge inverse QSVT 和干涉式 shadows。该投影的经典存储没有计入 4-qubit
+线路，因此 tiny 点只用于机制验证，不能加入原 Figure 2 的同一 machine-size
+纵轴。简单 polarity rule 与 exact tiny Ridge 的 accuracy 几乎相同；QSVT
+证据来自 heralding/verifier，而不是 accuracy lift。
 
 ## General-vector 数组与门级对应
 

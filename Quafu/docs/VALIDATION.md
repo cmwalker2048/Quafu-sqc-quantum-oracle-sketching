@@ -12,7 +12,7 @@ pyqsp：0.2.0
 
 ## 执行方法
 
-十一个 notebook 均通过该环境的 Jupyter kernel 执行并保留输出。
+十三个 notebook 均通过该环境的 Jupyter kernel 执行并保留输出。
 所有联网和真机提交开关保持 `False`。
 
 Markdown 与 notebook Markdown 单元的数学定界符统一为：
@@ -35,6 +35,8 @@ Markdown 与 notebook Markdown 单元的数学定界符统一为：
 | `08_imdb_general_vector_classification` | 通过；official 25k/25k Ridge 与 learned-weight QOS classification |
 | `09_quafu_imdb_vector_pilot` | 通过；IMDb-derived flat target、65 条 2-qubit QASM |
 | `10_quafu_general_vector_qsvt_pilot` | 通过；4-qubit full QSVT + real LCU、逐振幅等价与 4 条 QASM |
+| `11_quafu_hardware_validation` | 通过；73 条候选 QASM 离线审计、bit-order controls、统一提交/取回/parser |
+| `12_tiny_ridge_qsvt_shadows` | 通过；2D Ridge inverse-QSVT、干涉式 global-Clifford shadows 与 31 条 4q QASM |
 
 所有 notebook 的 error output 数量均为 0。
 
@@ -53,6 +55,8 @@ Qiskit 从实际 QASM 或对应的逻辑线路对象生成：
 - `assets/circuits/general-vector-pauli-sample.png`
 - `assets/circuits/imdb-flat-qos-echo-overview.png`
 - `assets/circuits/imdb-d4-general-qsvt-logical.png`
+- `assets/circuits/tiny-ridge-qsvt-logical.png`
+- `assets/circuits/tiny-ridge-shadow-dense-compiled.png`
 
 数值研究图：
 
@@ -65,6 +69,9 @@ Qiskit 从实际 QASM 或对应的逻辑线路对象生成：
 - `assets/figures/imdb_general_vector_qos_sweep.png`
 - `assets/figures/imdb-d4-flat-qos-results.png`
 - `assets/figures/imdb-d4-general-qsvt-scaling.png`
+- `assets/figures/tiny-ridge-qsvt-polynomial.png`
+- `assets/figures/tiny-ridge-shadow-accuracy.png`
+- `assets/figures/tiny-ridge-machine-size-comparison.png`
 
 其中 `qos-full-n2.png` 由 `qiskit.qasm2.loads(qasm_text)` 解析后绘制，因此也构成
 一次独立的本地 QASM 语法检查。
@@ -176,6 +183,47 @@ Qiskit 从实际 QASM 或对应的逻辑线路对象生成：
 - 真实 counts parser 对缺失/空/非法 bitstring fail closed，并保存失败原因；
 - 真机提交和结果取回均默认关闭。
 
+`11`：
+
+- 现场生成 2q/4q one-hot bit-order controls 4 条；
+- 重新解析并核对 4 条 calibration、65 条 flat 和 4 条 general-QSVT QASM；
+- 73 条线路的 hash、qubit/classical-bit/measurement schema 与 identity
+  measurement mapping 全部通过；
+- raw integer counts、corrected float weights、bitstring reversal、95% Wilson
+  区间、flat echo、general heralding/conditional fidelity parser 自检通过；
+- full QSVT 提交受 4q bit-order calibration 与 deep-circuit 双重 guard；
+- 正整数 task id、duplicate submission、submission cap、非终态 result、
+  receipt/registry/raw/returned-QASM 保存路径均已实现；
+- `ACTION="dry_run"` 完整执行，未读取凭据、未联网、未提交。
+
+`12`：
+
+- official-train-only 词汇选择与 2D Ridge，official-test accuracy 0.84848；
+- trivial polarity rule accuracy 0.84876，故 accuracy 不作为 solver lift；
+- normal-equation condition number 2.20413，对应
+  singular-value $\kappa_{\rm reg}=1.48463$；
+- 2×2 Halmos block encoding 与 degree-3 spectrum-matched inverse QSVT；
+- statevector ideal heralding probability 0.10457，postselected
+  weight-state fidelity 数值上约为 1；
+- interferometric postselection probability 0.18934，未做 amplitude
+  amplification；
+- 4 条 q0–q3 one-hot calibration、3 条 Ridge、12 条 shallow shadow control、
+  12 条 full QSVT-shadow，共 31 条 QASM 全部 parse/hash/schema/basis 通过；
+- Ridge QSVT prepare/verify 本地编译各 18 CX；full shadow 随 Clifford
+  setting 约 95–97 CX；
+- 12-setting Aer QSVT-shadow：signed direction cosine 约 0.99943、
+  weight norm ratio 约 0.623、signed-overlap RMSE 约 0.303、
+  official-test accuracy 约 0.84900；
+- full $4\times4$ density 重建只作为 $D=2$ 自检；setting cluster bootstrap
+  明确标为探索性，不冒充论文 median-of-means 保证；
+- submit receipt 冻结 QASM、Clifford、model/data hashes；fetch 对 provenance、
+  returned task id、count 合法性和 shots 总数 fail closed；
+- full-QSVT 提交和最终硬件点都要求显式 task cohort、人工设备时间窗确认、
+  每个 prerequisite 恰好一条可信结果，以及 calibration/Ridge/shallow-shadow
+  的统计质量门槛；理想伪硬件 cohort 可通过，零 Ridge fidelity 会被拒绝，
+  未显式选择 cohort 时只能标为 provisional；
+- `ACTION="dry_run"` 完整执行，未读取凭据、未联网、未提交。
+
 ## 尚未验证
 
 - 未使用或验证任何 API token；
@@ -183,8 +231,8 @@ Qiskit 从实际 QASM 或对应的逻辑线路对象生成：
 - 未提交 Quafu-SQC 任务；
 - 未验证远端编译器是否接受该具体 QASM；
 - 未获得真机 counts、校准信息或 transpiled QASM；
-- 未实现矩阵 block encoding、量子 ridge inverse、amplitude amplification
-  或 classical shadows；
+- tiny matrix block encoding、量子 Ridge inverse 和 classical shadows 已实现；
+  scalable sparse-oracle 版本与 amplitude amplification 仍未实现；
 - 未做严格系统级在线 streaming；
 - generic Aer 参数不是 Quafu-SQC 实时校准。
 
@@ -199,4 +247,7 @@ Qiskit 从实际 QASM 或对应的逻辑线路对象生成：
 6. 保存 `tid`、raw/corrected counts 和完整 transpiled QASM，检查二比特门数、
    二比特 depth 与残留三比特门；
 7. 再决定是否运行 flat IID $M$ sweep；
-8. 只有 flat controls 可接受时，才考虑 `10` 的 deep $M=8$ full-QSVT verifier。
+8. 只有 flat controls 可接受时，才考虑 `10` 的 deep $M=8$ full-QSVT verifier；
+9. 本轮 tiny Ridge/shadow 另按 `TINY_RIDGE_SHADOWS_README.md` 使用固定 4q
+   layout、四条 calibration、Ridge verifier、完整 shallow control，最后才
+   开启 `12` 的 full QSVT-shadow。

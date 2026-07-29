@@ -10,6 +10,10 @@
 - `qos-equivalence-n1.png`：`05` 中用于等价测试的实际 echo QASM；
 - `projector-phase-update-n3.png`：$n=3$ 的双工作 ancilla projector update；
 - `qos-campaign-balanced-n1.png`：`06` 中保留样本 barrier 的 balanced control。
+- `tiny-ridge-qsvt-logical.png`：`12` 的 3-qubit logical inverse-QSVT +
+  real-part LCU；
+- `tiny-ridge-shadow-dense-compiled.png`：`12` 的 4-qubit
+  interferometric-QSVT dense resynthesis；这是 tiny NISQ 编译技巧，不可扩展。
 
 不要手工编辑这些图片。修改线路后重新运行相应 notebook，以保持图片、QASM
 和代码一致。

@@ -2,8 +2,9 @@
 
 > 历史决策记录：本文件描述的是 `05`/`06` 开始前的取舍。该阶段已经完成；
 > general-vector、官方 IMDb、flat QASM 与 full $D=4$ QSVT 已分别在
-> `07`–`10` 实现。当前结果总览以 README 和
-> `GENERAL_VECTOR_IMDB_RESULTS.md` 为准。
+> `07`–`10` 实现；tiny Ridge inverse-QSVT 和 classical shadows 已在 `12`
+> 完成离线机制验证。当前结果总览以 README、
+> `GENERAL_VECTOR_IMDB_RESULTS.md` 和 `TINY_RIDGE_SHADOWS_RESULTS.md` 为准。
 
 ## 结论
 

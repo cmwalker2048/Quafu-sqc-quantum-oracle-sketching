@@ -200,18 +200,25 @@ proof-of-principle 送上真机。
 
 ## 5. 推荐真机顺序
 
-1. 在 `09` 中查询在线后端并运行一条 H-only sanity check；
-2. 对同一条低深度 balanced/exact-pair control 比较可用编译后端；
-3. 保存 raw counts、corrected counts、task id 和 returned transpiled QASM；
-4. control 合格后运行一个 IMDb flat IID stream；
-5. 只有成功事件数和编译资源仍可接受时，才运行 `10` 的
+实际提交和结果取回统一使用 `11_quafu_hardware_validation.ipynb`；`09/10`
+继续作为 QASM 生成、manifest 和算法来源。
+
+1. 先运行 2q/4q one-hot controls，确认 returned bitstring order；
+2. 运行 H-only sanity check；
+3. 对同一条低深度 balanced/exact-pair control 比较可用编译后端；
+4. 保存 raw counts、corrected counts、task id 和 returned transpiled QASM；
+5. control 合格后运行一个 IMDb flat IID stream；
+6. 只有成功事件数和编译资源仍可接受时，才运行
    `imdb_d4_general_qsvt_m8_verify`；
-6. 报告 success events、heralding probability 和 conditional fidelity，
+7. 报告 success events、heralding probability、conditional fidelity 和
+   95% Wilson 区间，
    不只报告条件 fidelity。
 
 `09` 和 `10` 的提交开关都默认是 `False`，需要人工选定唯一 experiment id
 后才能提交。`10` 还会在提交前重新计算 QASM hash，并强制检查 4 qubits、
 4 classical bits 和 4 次 measurement。
+
+逐单元操作见 [`HARDWARE_README.md`](../HARDWARE_README.md)。
 
 ## 6. 可复现运行顺序
 
