@@ -1,0 +1,9 @@
+method,input_label,scale_c,source_input_l2_norm,is_raw_ridge_weight,unit_samples_per_group,same_active_sample_indices_across_scales,success_probability,success_probability_ratio_to_c1,fidelity_to_target,test_accuracy_after_classical_rescale,raw_state_relative_difference_to_c1,conditional_direction_distance_to_c1,orientation_to_c1
+expected_source_core,scaled_unit_direction,0.5,0.5,False,1024,False,0.015315760244841145,1.0,0.9998923762400498,0.67752,0.0,0.0,1.0
+expected_source_core,unit_direction,1.0,1.0,False,1024,False,0.015315760244841145,1.0,0.9998923762400498,0.67752,0.0,0.0,1.0
+expected_source_core,scaled_unit_direction,2.0,2.0,False,1024,False,0.015315760244841145,1.0,0.9998923762400498,0.67752,0.0,0.0,1.0
+expected_source_core,raw_ridge_weight,5.726650464525151,5.726650464525151,True,1024,False,0.01531576024484114,0.9999999999999997,0.99989237624005,0.67752,5.864766904897763e-16,5.69582424714708e-16,1.0
+active_source_core,scaled_unit_direction,0.5,0.5,False,1024,True,0.1572035330967595,2.7304151086127164,0.7317976266038432,0.6612,0.7132460458507768,0.22425342042533014,1.0
+active_source_core,unit_direction,1.0,1.0,False,1024,True,0.05757495722935414,1.0,0.7664893645317018,0.66336,0.0,0.0,1.0
+active_source_core,scaled_unit_direction,2.0,2.0,False,1024,True,0.015168285024251923,0.26345282314024004,0.7540625824005354,0.66212,0.4878492052023652,0.046233265767684224,1.0
+active_source_core,raw_ridge_weight,5.726650464525151,5.726650464525151,True,1024,True,0.0018651374407558233,0.03239494270618229,0.7481297805664544,0.6614,0.8204144561864776,0.06041023226447045,1.0

@@ -13,3 +13,8 @@ dependencies:
   - pip:
       - quafusqc==3.3.9
       - qiskit[visualization]~=2.5.0
+      - qiskit-aer==0.17.2
+      - scikit-learn==1.9.0
+      - jax==0.8.1
+      - pyqsp==0.2.0
+      - tqdm==4.67.1

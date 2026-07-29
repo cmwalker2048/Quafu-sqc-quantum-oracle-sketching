@@ -1,5 +1,27 @@
 # 研究计划与验收标准
 
+## 当前路线决定
+
+完整复现原 Figure 2 不再是本阶段前置条件。其关键代码/资源含义已在
+`SOURCE_MAP.md` 审计，完整 IMDb/PBMC、classification/PCA 复跑移到未来发布版
+附录。
+
+当前主线已经推进为：
+
+$$
+\text{Boolean 解析平均}
+\rightarrow
+\text{QASM 等价}
+\rightarrow
+\text{general-vector QOS}
+\rightarrow
+\text{官方 IMDb classification}
+\rightarrow
+\text{flat/full-vector Quafu-SQC pilot}.
+$$
+
+去重依据与本轮结果见 `NEXT_STAGE_DECISION.md`。
+
 ## 研究问题
 
 本项目不把“量子加速”笼统地当作一个指标，而是分别回答：
@@ -16,7 +38,7 @@
 
 - 论文讨论的 noisy/correlated **classical data**；
 - 容错模型中的 logical quantum noise；
-- 当前 Quafu 物理机的门、退相干和读出噪声。
+- 当前 Quafu-SQC 物理机的门、退相干和读出噪声。
 
 有限规模真机实验只能支持第三类中的局部、经验性结论，不能证明任意物理噪声
 和任意规模下都保持指数优势。
@@ -26,14 +48,14 @@
 产出：
 
 - 环境版本检查；
-- 不含凭据的 Quafu 连接模板；
+- 不含凭据的 Quafu-SQC 连接模板；
 - 固定随机种子；
 - notebook 执行顺序；
 - Git 忽略规则。
 
 验收：
 
-- 五个 notebook 从 `QuantumComputing` 环境可依次执行；
+- 十一个 notebook 从 `QuantumComputing` 环境可依次执行；
 - 仓库文本与 notebook 源码中不存在 API token；
 - 默认执行不会提交云端任务。
 
@@ -45,13 +67,15 @@ $$
 O_f=\sum_x(-1)^{f(x)}|x\rangle\langle x|.
 $$
 
-实验参数：
+本轮已执行参数：
 
-- 地址量子比特 $n=2,3,4$；
+- 门级地址量子比特 $n=1,2,3$；
 - $N=2^n$；
 - parity、majority、稀疏 marked set、随机 Boolean function；
 - $M=N,2N,4N,\ldots$；
-- 独立数据流 $K\ge 100$。
+- 解析平均检验使用独立数据流 $R_{\rm streams}=1200$。
+
+$n=4$ 保留为后续 NumPy/资源扩展点，不冒充本轮已有的可审计门级证据。
 
 核心指标：
 
@@ -68,16 +92,27 @@ $$
 - `1 - F_+` 随 $M$ 总体下降；
 - 图中显示 between-stream 置信区间；
 - finite shots 被作为第二层随机性单独加入。
+- 作者 expected operator 与真实 $\mathbb E[F_{\rm echo}]$ 被分开；
+- expected operator、解析 fidelity 平均与显式 Monte Carlo 相互核对；
+- $n=1,2,3$ 的 QASM 完整 statevector 与直接相位公式误差小于 $10^{-10}$，
+  并包含非对称 random truth table 的端序检查。
 
 ## 阶段 2：噪声与有限最优样本数
 
-先实现可解释的简化模型：
+先实现两个层次：
 
-- coherent phase bias；
-- per-update phase jitter；
-- local phase-flip/dephasing；
-- symmetric readout bit flip；
-- finite shots。
+1. `02` 的可解释教学模型：
+   - coherent phase bias；
+   - per-update phase jitter；
+   - local phase-flip/dephasing；
+   - symmetric readout bit flip；
+   - finite shots。
+2. `06` 的实际门级 generic 模型：
+   - 先把 CCX 分解到 `u` + `cx`；
+   - 每个一、二比特门施加 depolarizing error；
+   - measurement 施加 symmetric readout error；
+   - balanced-stream control 隔离 IID 计数波动与门噪声；它匹配同一 $M$ 和
+     平均门数尺度，不声称与每条 IID 线路严格等深。
 
 研究假设：
 
@@ -92,14 +127,21 @@ $$
 验收：
 
 - 同图比较 ideal、coherent error、dephasing/readout；
-- 清楚标出扫描的 $K,M,S$；
-- 不把简化密度矩阵模型称为 Quafu 的完整设备噪声模型；
-- 如果曲线出现最低点，报告经验 $M_\mathrm{opt}$ 及不确定性。
+- 清楚标出扫描的 $R_{\rm streams},M_{\rm data},S_{\rm shots}$；
+- 不把简化密度矩阵模型称为 Quafu-SQC 的完整设备噪声模型；
+- 如果曲线出现最低点，先对独立 stream 做 bootstrap；
+- 只有内部最优点达到预先规定的 80% bootstrap **选择频率启发式**时，才报告
+  稳定候选 $M_\mathrm{opt}$；该频率不解释成“真实最优概率”，否则报告完整曲线。
+- generic Aer 模型不能称为 Quafu-SQC calibrated noise。
 
-## 阶段 3：Quafu 门级功能验证
+## 阶段 3：Quafu-SQC 门级功能验证
 
-第一版限制为 $n\le 2$，原因是 OpenQASM 2.0 的 `ccx` 可以直接表达，
-而更高阶 MCX 需要额外 ancilla 与明确的分解策略。
+主真机 pilot 优先 $n\le2$。离线 campaign 已扩展到 $n=3$：
+
+- 使用两个 clean work qubits，总共 5 qubits；
+- 每个有效 projector update 使用 4 个 CCX；
+- 真机只先考虑 sparse marked case；
+- balanced/majority 只作为编译与门数压力测试。
 
 单样本门：
 
@@ -120,13 +162,19 @@ H^n → sampled projector phases → exact inverse → H^n → measure
 - 可读的逻辑概览图；
 - 从实际 QASM 解析出的逐门线路图；
 - 保存到 `assets/circuits/` 的 PNG；
-- QASM 的逻辑门计数。
+- QASM 的逻辑门计数；
+- H-only、exact-pair、balanced-stream 和 IID 四类主线路，另加
+  compiler-stress 与 optimized twin；
+- barrier-preserving 主线路与少量 no-barrier optimized twins；
+- optimized twin 必须复用同一条 balanced stream，并在 manifest 记录 pair id；
+- manifest 中的 truth table、完整 stream、hash、shots 与门预算。
 
 验收：
 
 - QASM 可在 notebook 中完整打印和保存；
 - 提交前输出门计数、qubit 数、`M` 和 QASM 哈希；
 - `SUBMIT_TO_HARDWARE=False` 为默认值；
+- 必须显式指定单个 experiment id，不能默认批量提交；
 - 后端状态必须实时查询，不能使用旧 demo 的截图；
 - 任务结果保存 `tid`、原始 counts、transpiled QASM 和实验参数。
 
@@ -134,7 +182,8 @@ H^n → sampled projector phases → exact inverse → H^n → measure
 
 - 静态 QASM 预先保存所有样本门，因此只验证 gate-level dynamics；
 - `F_+` 只验证 $|+\rangle^{\otimes n}$ 输入；
-- 编译后的 `ccx` 会增加很多二比特门。
+- 编译后的 `ccx` 会增加很多二比特门；
+- barrier 保留静态样本边界，但不会把 QASM 变成在线 streaming。
 
 ## 阶段 4：小型 centroid 分类
 
@@ -153,10 +202,19 @@ $$
 4. 报告 accuracy 和 margin；
 5. 再用真正的 vector QOS state sketch 替换理想态制备。
 
-当前 `04` notebook 实现前四项，用来隔离“读出是否正确”。它不是完整 QOS
-分类器，必须保留这一说明。
+`04` 实现前四项，用来隔离“读出是否正确”；它仍不是完整 QOS 分类器。
+后续证据链已经补齐：
 
-## 阶段 5：tiny ridge 与 QSVT
+- `07`：general-vector expected/active QOS 与 fixed-source regression；
+- `08`：官方 IMDb 25k/25k、真实 Ridge weight、QOS 重建后重新分类；
+- `09`：IMDb-derived flat sign-vector QASM；
+- `10`：IMDb-derived $D=4$ full degree-4 QSVT + real-part LCU QASM。
+
+`08` 的训练仍是经典 Ridge，`09`/`10` 的低维 target 是 class-centroid。
+因此当前结果应称为“真实数据上的 vector-sketch classification bridge”，
+而不是完整量子 LS-SVM 训练。
+
+## 阶段 5：tiny quantum ridge solver
 
 目标：
 
@@ -177,9 +235,12 @@ $$
 
 验收前置条件：
 
-- vector state sketch 已被多输入态测试；
+- vector state sketch 已被多输入态测试，并已由 `10` 做 $D=4$ 门级等价；
 - block encoding 的投影块与目标矩阵数值一致；
 - 多项式逼近误差与线路误差分开报告。
+
+这里的 QSVT 指 ridge inverse polynomial；`07`/`10` 已实现的是 vector state
+sketch 内部用于 arcsin 的 QSVT，不能把二者混为同一个完成项。
 
 ## 阶段 6：classical shadows
 
@@ -223,3 +284,7 @@ $$
 3. `accuracy vs physical noise strength`；
 4. 编译前后的一、二比特门数和 depth；
 5. $K,M,S$ 的层次化不确定性。
+
+当前已完成第 1 项的解析/Monte Carlo/generic-noise 版本；第 2 项已有官方 IMDb
+实测准确率与 formula-only logical-space 曲线；第 4 项已有本地编译前后资源。
+真实设备相关部分必须等 Quafu-SQC result 与远端 transpiled circuit 返回后再填入。

@@ -1,4 +1,4 @@
-# Quafu 工具链选型
+# Quafu-SQC 工具链选型
 
 ## 结论
 
@@ -11,14 +11,15 @@ NumPy/Matplotlib 离线验证
         +
 Qiskit 2.5 解析与线路可视化
         +
+Qiskit Aer 0.17.2 的 generic gate-level noise
+        +
 quafusqc 3.3.9 的 quafu.Task 云端接口
 ```
 
-暂不安装 QuarkStudio，也不使用 PyQuafu。
-
-PyQuafu 尚未被上游正式标记为 deprecated，但它对应旧的云端通路；新的
-Quafu-SQC 文档已经采用 `quafusqc`。此外 `pyquafu` 和 `quafusqc` 都写入
-顶层 `quafu` 包，放在同一环境会产生 namespace 覆盖风险。
+暂不安装 QuarkStudio，也不使用 PyQuafu。本项目按用户要求把 PyQuafu 视为
+已弃用的旧路线，统一采用当前 Quafu-SQC 文档所用的 `quafusqc`。此外
+`pyquafu` 和 `quafusqc` 都写入顶层 `quafu` 包，放在同一环境会产生 namespace
+覆盖风险。
 
 ## 本机实测环境
 
@@ -32,12 +33,14 @@ Python 3.13.7
 默认 `python3` 是系统 Python 3.9，默认 Miniconda base 也没有 `quafusqc`。
 因此必须从 `QuantumComputing` 环境启动 Jupyter。
 
-截至 2026-07-28 的工具定位：
+截至 2026-07-29 的工具定位：
 
 | 工具 | 当前状态 | 本项目结论 |
 |---|---|---|
 | `quafusqc 3.3.9` | 已安装；轻量云任务客户端 | 第一阶段采用 |
-| `qiskit 2.5.1` | 已安装；QASM 解析和线路绘图 | 采用，但不负责 Quafu 提交 |
+| `qiskit 2.5.1` | 已安装；QASM 解析和线路绘图 | 采用，但不负责 Quafu-SQC 提交 |
+| `qiskit-aer 0.17.2` | 已安装；本地门级噪声模拟 | 采用，但不是 Quafu-SQC 校准模型 |
+| `scikit-learn 1.9.0` | 已安装；后续真实数据基线 | 当前 Boolean 阶段不依赖 |
 | `quarkstudio 7.3.9` | 未安装；完整 QOS/实验室服务栈 | 当前过重，不作为核心依赖 |
 | `quarkcircuit 0.5.13` | 未安装；线路构造与转译 | 需要复杂线路对象时再评估 |
 | `pyquafu 0.4.5` | 未安装；旧云通路兼本地模拟 | 不与 `quafusqc` 共装 |
@@ -112,10 +115,12 @@ Qiskit 只用于：
 
 - `qiskit.qasm2.loads(...)` 独立解析生成的 OpenQASM 2.0；
 - `QuantumCircuit.draw(output="mpl")` 在 notebook 中生成线路图；
-- 在提交前检查 qubit/clbit 数量和逻辑门计数。
+- 在提交前检查 qubit/clbit 数量和逻辑门计数；
+- 通过 `Statevector` 检查实际 QASM 与直接公式等价；
+- 通过 Qiskit Aer 施加明确给定的 depolarizing/readout 通用噪声。
 
-它不保存 Quafu token、不提交 Quafu 任务，也不替代 `quafusqc`。当前没有安装
-Qiskit Aer，因为本项目已有明确的 NumPy/密度矩阵验证层，线路绘图不需要 Aer。
+它不保存 Quafu-SQC token、不提交 Quafu-SQC 任务，也不替代 `quafusqc`。
+Aer 的参数不是从 Quafu-SQC 实时校准获取，因此只能用于机制与工程趋势分析。
 
 ## 任务模板
 
@@ -127,7 +132,7 @@ task = {
     "shots": 1024,
     "compile": True,
     "options": {
-        "compiler": "quarkcircuit",
+        "compiler": "quarkcircuit",  # 先与 qsteed 做代表线路 A/B
         "correct": False,
         "open_dd": None,
         "target_qubits": [],
