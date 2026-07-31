@@ -104,3 +104,16 @@ manifest entry、Clifford matrix/seed、QASM/model/data hashes；取回时 prove
 - `raw_results/`：status、receipt、raw payload、returned QASM 与真机图。
 
 后三类真实云端产物默认被忽略，发布前需人工审核。
+
+`13_imdb_qos_hardware_scaling.ipynb` 使用
+`qos_hardware_scaling/` 保存独立的 IMDb $N=4$ Boolean-QOS 缩放 campaign：
+
+- $M=4,8,16,32,64,96$ 六条 2q 静态 QASM；
+- 固定 target、nested IID stream、QASM hash 和逻辑门资源的 manifest；
+- 论文 expected-unitary operator error、固定 stream operator error、
+  理想 $F_{\rm echo}$ 与解析 $\mathbb E[F_{\rm echo}]$；
+- 离线审计 CSV/JSON 和 $\epsilon$/$F_{\rm echo}$/CX 分面图；
+- 可选的 task registry、raw result、returned QASM 与硬件结果 CSV/JSON。
+
+真实云端 registry 与 raw results 在发布前仍需人工审核；图中不会把
+$1-F_{\rm echo}$ 冒充论文 Figure 3(b) 的 operator error $\epsilon$。

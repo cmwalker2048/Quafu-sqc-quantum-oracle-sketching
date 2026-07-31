@@ -1,0 +1,7 @@
+enabled,run_label,experiment_id,M_data,compiler,shots,qasm_sha256_ok,schema_ok,measurement_map,parse_error,audit_pass
+True,imdb_qos_scaling_pilot_001_M4,imdb_qos_scaling_M4_nested_r0,4,qsteed,4096,True,True,"[(0, 0), (1, 1)]",,True
+True,imdb_qos_scaling_pilot_001_M8,imdb_qos_scaling_M8_nested_r0,8,qsteed,4096,True,True,"[(0, 0), (1, 1)]",,True
+True,imdb_qos_scaling_pilot_001_M16,imdb_qos_scaling_M16_nested_r0,16,qsteed,4096,True,True,"[(0, 0), (1, 1)]",,True
+True,imdb_qos_scaling_pilot_001_M32,imdb_qos_scaling_M32_nested_r0,32,qsteed,4096,True,True,"[(0, 0), (1, 1)]",,True
+True,imdb_qos_scaling_pilot_001_M64,imdb_qos_scaling_M64_nested_r0,64,qsteed,4096,True,True,"[(0, 0), (1, 1)]",,True
+True,imdb_qos_scaling_pilot_001_M96,imdb_qos_scaling_M96_nested_r0,96,qsteed,4096,True,True,"[(0, 0), (1, 1)]",,True

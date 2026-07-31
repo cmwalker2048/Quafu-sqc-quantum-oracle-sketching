@@ -22,6 +22,13 @@ Boolean phase oracle 重新写成可以检查、模拟和提交到 Quafu-SQC 云
 12. 用一个 notebook 统一完成 bit-order 校准、提交、轮询、结果取回和远端资源审计。
 13. 实现 2D IMDb tiny Ridge、normal-equation inverse QSVT 和干涉式
     global-Clifford classical shadows，并生成独立的 4-qubit 真机包。
+14. 增加 IMDb $N=4$ Boolean-QOS 真机缩放 campaign，一次生成、提交和
+    取回 $M=4,8,16,32,64,96$ 六条线路，并严格区分论文算子误差
+    $\epsilon$ 与硬件 $F_{\rm echo}$。
+15. 增加 $P\in\{1,2,4,8,16\}$、$M\in\{4,8,16,32,64,96\}$ 的
+    独立-stream 并行 QOS ensemble：每个 $(P,M)$ 是一条宽线路和一个
+    真机 task；完整 30 点响应面联合分析 pair 边缘 fidelity、同-shot
+    相关性、设计效应与有效并行度 $P_{\rm eff}$。
 
 `12` 已包含一个真正执行 matrix block encoding、tiny Ridge inverse QSVT 和
 shadow readout 的有限规模闭环；它仍不是 scalable QOS data loading、
@@ -52,6 +59,8 @@ amplitude amplification 或容错级 LS-SVM，也不能用低维真机 pilot 证
 | tiny ridge + inverse QSVT | 已实现，默认离线 | 2×2 normal-equation block encoding、degree-3 spectrum-matched inverse |
 | classical shadows | 已实现 tiny pilot | 干涉态 + 12-setting batched global Clifford；保留分类符号 |
 | tiny Ridge/shadow 真机包 | 已生成，尚未提交 | 31 条 4q QASM、四位校准、provenance guard、status/submit/fetch |
+| IMDb Boolean-QOS 缩放真机包 | 已生成，默认离线 | 6 条 2q QASM、批量异步提交、独立 registry、$\epsilon$/$F_{\rm echo}$ 双面板 |
+| 并行 QOS ensemble 真机包 | 已生成，默认离线 | $5\times6$ 的 $P\times M$ 网格；每个 $P$ 批量六 task；3D 响应面、returned-layout 审计、cluster-aware CI 与 $P_{\rm eff}$ |
 
 ## 目录
 
@@ -60,6 +69,8 @@ Quafu/
 ├── README.md
 ├── HARDWARE_README.md
 ├── TINY_RIDGE_SHADOWS_README.md
+├── QOS_HARDWARE_SCALING_README.md
+├── PARALLEL_QOS_ENSEMBLE_README.md
 ├── environment.yml
 ├── requirements.txt
 ├── .gitignore
@@ -97,7 +108,9 @@ Quafu/
 │   ├── 09_quafu_imdb_vector_pilot.ipynb
 │   ├── 10_quafu_general_vector_qsvt_pilot.ipynb
 │   ├── 11_quafu_hardware_validation.ipynb
-│   └── 12_tiny_ridge_qsvt_shadows.ipynb
+│   ├── 12_tiny_ridge_qsvt_shadows.ipynb
+│   ├── 13_imdb_qos_hardware_scaling.ipynb
+│   └── 14_parallel_qos_ensemble.ipynb
 ├── data/
 │   └── README.md
 └── results/
@@ -108,6 +121,8 @@ Quafu/
     ├── imdb_vector_pilot/         # 65 条 flat QASM
     ├── general_vector_qsvt_pilot/ # 4-qubit full QSVT QASM
     ├── tiny_ridge_qsvt_shadows/   # 31 条 tiny Ridge/shadow QASM
+    ├── qos_hardware_scaling/       # 6 条 IMDb N=4 缩放 QASM
+    ├── qos_parallel_ensemble/      # 30 点 P×M 并行 QOS 响应面
     └── quafu_bundle/              # 42 条 Boolean QASM
 ```
 
@@ -144,6 +159,23 @@ flat controls、compiler A/B、IMDb IID 和 full-QSVT。
 `12_tiny_ridge_qsvt_shadows.ipynb`，先以 `ACTION="dry_run"` 完整运行，再严格
 按 [Tiny Ridge/shadows 真机指南](TINY_RIDGE_SHADOWS_README.md) 分
 `calibration → ridge → shadow_control → shadow_qsvt` 四阶段提交。
+
+如果目标是论文 Figure 3(b) 启发的 IMDb $N=4$ Boolean-QOS 真机缩放 pilot，
+直接打开 `13_imdb_qos_hardware_scaling.ipynb`。它会一次处理
+$M=4,8,16,32,64,96$ 六条线路，操作见
+[QOS 真机缩放指南](QOS_HARDWARE_SCALING_README.md)。
+
+如果目标是研究多组独立 stream 的空间并行与串扰，直接打开
+`14_parallel_qos_ensemble.ipynb`。依次选择 $P=1,2,4,8,16$；每个 $P$
+会为 $M=4,8,16,32,64,96$ 生成六条含 $P$ 个逻辑 pair 的宽线路。
+一次 `submit` 顺序创建六个 task，等六个任务结束后一次 `fetch` 批量取回。
+五档完成后共 30 个 task，并生成 $P$–$M$–$F_{\rm echo}$ 三维响应面、
+固定 $M$ 与固定 $P$ 双向切片、同-shot 相关性、$P_{\rm eff}/P$ 和线路
+资源热力图。完整操作见
+[并行 QOS ensemble 真机指南](PARALLEL_QOS_ENSEMBLE_README.md)。
+关闭后重新打开 Notebook 不需要重跑已有真机任务；task registry 和结果会从
+磁盘恢复。终态失败或 returned-layout 审计失败的单点可使用显式
+`ACTION="retry"` 替换，新旧 task ID 都会保留。
 
 ### 新机器或 GitHub clone
 
